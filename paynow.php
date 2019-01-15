@@ -5,6 +5,9 @@ ini_set('display_errors', 1);
 $_POST = json_decode(file_get_contents('php://input'), true);
 //pull in the database
 require 'dbconfig.php';
+require 'Paystack.php';
+
+$paystack = new Paystack('sk_test_af1b02672c3124527de88d9b4ab4df6c72dd23c9');
 
 // Capture Post Data that is coming from the form
 $name = $_POST['name'];
@@ -45,10 +48,29 @@ if ($usercheckquery->rowCount() > 0) {
     $enteruserquery->rowCount();
     // Check to see if the query executed successfully
     if ($enteruserquery->rowCount() > 0) {
+        
+        $trx = $paystack->transaction->initialize(
+            [
+                'amount'    =>  $amount,
+                'firstname' => $name,
+                'email'     =>  $email,
+                'metadata'  =>  json_encode([
+                    'custom_fields' => [
+                        'display_name' => 'Mobile Number',
+                        'variable_name' => 'mobile_number',
+                        'value'=> $phone
+                    ]
+                ])
+            ]
+        );
 
+        if(!$trx->status) {
+            exit($trx->message);
+        }
 
+        header('Location: ' . $trx->data->authorization_url);
 
-        echo json_encode("success");
+        // echo json_encode("success");
     }
 
 
