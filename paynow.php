@@ -7,8 +7,6 @@ $_POST = json_decode(file_get_contents('php://input'), true);
 require 'dbconfig.php';
 require 'Paystack.php';
 
-$paystack = new Paystack('sk_test_af1b02672c3124527de88d9b4ab4df6c72dd23c9');
-
 // Capture Post Data that is coming from the form
 $name = $_POST['name'];
 $email = $_POST['email'];
@@ -49,28 +47,43 @@ if ($usercheckquery->rowCount() > 0) {
     // Check to see if the query executed successfully
     if ($enteruserquery->rowCount() > 0) {
         
+        $paystack = new Paystack('sk_test_af1b02672c3124527de88d9b4ab4df6c72dd23c9');
+        // the code below throws an exception if there was a problem completing the request,
+        // else returns an object created from the json response
         $trx = $paystack->transaction->initialize(
-            [
-                'amount'    =>  $amount,
-                'firstname' => $name,
-                'email'     =>  $email,
-                'metadata'  =>  json_encode([
-                    'custom_fields' => [
-                        'display_name' => 'Mobile Number',
-                        'variable_name' => 'mobile_number',
-                        'value'=> $phone
+        [
+            'amount'=> $amount, /* 20 naira */
+            'email'=> $email,
+            'callback_url'=>'https://awlo.org',
+            'metadata' => json_encode([
+                'custom_fields'=> [
+                    [
+                    'display_name'=> "First Name",
+                    'variable_name'=> "first_name",
+                    'value'=> $name
+                    ],
+                    [
+                    'display_name'=> "Last Name",
+                    'variable_name'=> "last_name",
+                    'value'=> 'awlo'
+                    ],
+                    [
+                    'display_name'=> "Mobile Number",
+                    'variable_name'=> "mobile_number",
+                    'value'=> $phone
                     ]
-                ])
-            ]
+                ]
+            ])
+        ]
         );
 
-        if(!$trx->status) {
-            exit($trx->message);
-        }
+        // status should be true if there was a successful call
+        // if (!$trx->status) {
+        //     exit($trx->message);
+        // }
 
-        header('Location: ' . $trx->data->authorization_url);
 
-        // echo json_encode("success");
+        echo json_encode($trx->data->authorization_url);
     }
 
 

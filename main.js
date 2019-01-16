@@ -30,7 +30,8 @@
             return response.json();            
         })
         .then((data)=>{
-            console.log(data);
+            window.location.href = data;
+            // console.log(data);
         })
         .catch((error)=>{
             console.log('The Request Failed', error);
